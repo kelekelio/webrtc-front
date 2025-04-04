@@ -10,22 +10,24 @@ const ScreenStreamer = () => {
             const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
             videoRef.current.srcObject = stream;
 
-            const mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm; codecs=vp8" });
+            const mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm" });
             mediaRecorderRef.current = mediaRecorder;
 
             mediaRecorder.ondataavailable = async (event) => {
                 if (event.data.size > 0) {
-                    const formData = new FormData();
-                    formData.append("video", event.data, "screen-stream.webm");
+                    const blob = new Blob([event.data], { type: "video/webm" });
 
-                    await fetch("http://localhost:8080/stream", { // Adjust based on Spring Boot port
+                    const formData = new FormData();
+                    formData.append("videoChunk", blob, "chunk.webm");
+
+                    await fetch("http://localhost:8080/stream", { // Endpoint for streaming
                         method: "POST",
                         body: formData
                     });
                 }
             };
 
-            mediaRecorder.start(1000); // Send data in 1-second chunks
+            mediaRecorder.start(1000); // Sends data in 1-second chunks
             setStreaming(true);
         } catch (error) {
             console.error("Error starting screen share:", error);
@@ -35,8 +37,9 @@ const ScreenStreamer = () => {
     const stopStreaming = () => {
         if (mediaRecorderRef.current) {
             mediaRecorderRef.current.stop();
-            setStreaming(false);
         }
+        setStreaming(false);
+
         if (videoRef.current.srcObject) {
             videoRef.current.srcObject.getTracks().forEach(track => track.stop());
         }
@@ -44,7 +47,7 @@ const ScreenStreamer = () => {
 
     return (
         <div className="p-4 text-center">
-            <h1 className="text-2xl font-bold">Screen Streamer</h1>
+            <h1 className="text-2xl font-bold">Live Screen Streamer</h1>
             <video ref={videoRef} autoPlay playsInline className="border w-full max-w-xl mx-auto mt-4" />
             <div className="mt-4">
                 {streaming ? (
