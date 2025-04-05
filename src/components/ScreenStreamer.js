@@ -18,9 +18,9 @@ const ScreenStreamer = () => {
                     const blob = new Blob([event.data], { type: "video/webm" });
 
                     const formData = new FormData();
-                    formData.append("videoChunk", blob, "chunk.webm");
+                    formData.append("video", blob, "chunk.webm");
 
-                    await fetch("http://localhost:8080/stream", { // Endpoint for streaming
+                    await fetch("http://localhost:3001/upload", { // Endpoint for streaming
                         method: "POST",
                         body: formData
                     });
